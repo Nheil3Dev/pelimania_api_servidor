@@ -1,10 +1,10 @@
 const connection = require('../database/mysql')
 
 function agregarPelicula (req, res) {
-  const id = req.body.id
-  const titulo = req.body.titulo
-  const anho = req.body.anho
-  const foto = req.body.foto
+  const id = req.body.pelicula.id
+  const titulo = req.body.pelicula.titulo
+  const anho = req.body.pelicula.anho
+  const foto = req.body.pelicula.foto
   const sql = 'INSERT INTO pelicula (id, titulo, año, foto) VALUES (?, ?, ?, ?)'
   connection.query(sql, [id, titulo, anho, foto], (error, result, fields) => {
     try {
