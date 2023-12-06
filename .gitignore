@@ -1,2 +1,7 @@
 node_modules
 request_pruebas
+.env
+src/database/inserts.js
+src/database/tables.js
+src/database/mysql.js
+pelimania.sql

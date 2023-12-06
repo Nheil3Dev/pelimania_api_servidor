@@ -1,9 +1,7 @@
-const express = require('express')
-const { anadirComentario, obtenerComentariosPelicula, obtenerTodos, borrarComentario, obtenerComentariosUsuario } = require('../services/comentario')
+import { Router } from 'express'
+import { anadirComentario, borrarComentario, obtenerComentariosPelicula, obtenerComentariosUsuario, obtenerTodos } from '../services/comentario.js'
 
-const commentRouter = express.Router()
-
-commentRouter.use(express.json())
+export const commentRouter = Router()
 
 commentRouter.post('/anadir', (req, res) => {
   anadirComentario(req, res)
@@ -24,5 +22,3 @@ commentRouter.delete('/borrar', (req, res) => {
 commentRouter.get('/usuario/:usuario', (req, res) => {
   obtenerComentariosUsuario(req, res)
 })
-
-module.exports = commentRouter

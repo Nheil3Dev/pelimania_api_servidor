@@ -1,8 +1,7 @@
-const express = require('express')
-const { todosUsuarios, comprobarUsuario, agregarUsuario, borrarUsuario } = require('../services/usuario')
-const userRouter = express.Router()
+import { Router } from 'express'
+import { agregarUsuario, borrarUsuario, comprobarUsuario, todosUsuarios } from '../services/usuario.js'
 
-userRouter.use(express.json())
+export const userRouter = Router()
 
 userRouter.get('/todos', (req, res) => {
   todosUsuarios(res)
@@ -19,5 +18,3 @@ userRouter.post('/anadir', (req, res) => {
 userRouter.delete('/borrar', (req, res) => {
   borrarUsuario(req, res)
 })
-
-module.exports = userRouter

@@ -1,8 +1,7 @@
-const express = require('express')
-const { agregarPelicula, seguirPelicula, dejarSeguirPelicula, peliculasUsuario, comprobarPelicula, comprobarPeliculaBase } = require('../services/pelicula')
-const movieRouter = express.Router()
+import { Router } from 'express'
+import { agregarPelicula, comprobarPelicula, comprobarPeliculaBase, dejarSeguirPelicula, peliculasUsuario, seguirPelicula } from '../services/pelicula.js'
 
-movieRouter.use(express.json())
+export const movieRouter = Router()
 
 movieRouter.post('/anadir', (req, res) => {
   agregarPelicula(req, res)
@@ -27,5 +26,3 @@ movieRouter.get('/comprobar/:usuario/:idPelicula', (req, res) => {
 movieRouter.get('/comprobarBase/:id', (req, res) => {
   comprobarPeliculaBase(req, res)
 })
-
-module.exports = movieRouter

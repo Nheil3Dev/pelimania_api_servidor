@@ -1,78 +1,95 @@
-const connection = require('../database/mysql')
+import { db } from '../database/sqlite.js'
 
-function anadirComentario (req, res) {
-  const comentario = req.body.comentario
-  const spoiler = req.body.spoiler
-  const estrellas = req.body.estrellas
-  const usuario = req.body.usuario
-  const idPelicula = req.body.idPelicula
-  const sql = 'INSERT INTO comentario (comentario, spoiler, estrellas, usuario, idPelicula) VALUES (?, ?, ?, ?, ?)'
-  connection.query(sql, [comentario, spoiler, estrellas, usuario, idPelicula], (error, result, fields) => {
-    try {
-      if (error) throw error
-      res.json({ anadido: true })
-    } catch (error) {
-      res.json({ anadido: false })
-    }
-  })
+export async function anadirComentario (req, res) {
+  try {
+    const { comentario, spoiler, estrellas, usuario, idPelicula } = req.body
+
+    const isCreated = await db.execute({
+      sql: 'INSERT INTO comentario (comentario, spoiler, estrellas, usuario, idPelicula) VALUES (?, ?, ?, ?, ?)',
+      args: [comentario, spoiler, estrellas, usuario, idPelicula]
+    })
+
+    if (isCreated.affectedRows === 1) return res.json({ anadido: true })
+
+    return res.json({ anadido: false })
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-function obtenerComentariosPelicula (req, res) {
-  const idPelicula = req.params.idPelicula
-  const sql = 'SELECT * FROM comentario WHERE idPelicula = ? ORDER BY fecha DESC'
-  connection.query(sql, idPelicula, (error, result, fields) => {
-    try {
-      if (error) throw error
-      res.json(result)
-    } catch (error) {
-      res.json([])
-    }
-  })
+export async function obtenerComentariosPelicula (req, res) {
+  try {
+    const { idPelicula } = req.params
+
+    const comments = await db.execute({
+      sql: 'SELECT * FROM comentario WHERE idPelicula = ? ORDER BY fecha DESC',
+      args: [idPelicula]
+    })
+
+    return res.json(comments.rows)
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-function obtenerTodos (req, res) {
-  const sql = 'SELECT c.usuario, c.idPelicula, c.comentario, c.estrellas, c.fecha, c.spoiler, p.id, p.titulo FROM comentario AS c INNER JOIN pelicula AS p ON c.idPelicula = p.id ORDER BY c.fecha DESC'
-  connection.query(sql, (error, result, fields) => {
-    try {
-      if (error) throw error
-      res.json(result)
-    } catch (error) {
-      res.json([])
-    }
-  })
+export async function obtenerTodos (req, res) {
+  try {
+    const comments = await db.execute(`
+      SELECT 
+        c.usuario, c.idPelicula, c.comentario, c.estrellas, c.fecha, c.spoiler, p.id, p.titulo 
+      FROM 
+        comentario AS c 
+      INNER JOIN 
+        pelicula AS p ON c.idPelicula = p.id 
+      ORDER BY 
+        c.fecha DESC
+    `)
+
+    return res.json(comments.rows)
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-function borrarComentario (req, res) {
-  const usuario = req.body.usuario
-  const idPelicula = req.body.idPelicula
-  const fecha = req.body.fecha
-  const sql = 'DELETE FROM comentario WHERE usuario = ? && idPelicula = ? && fecha = ?'
-  connection.query(sql, [usuario, idPelicula, fecha], (error, result, fields) => {
-    try {
-      if (error) throw error
-      if (result.affectedRows === 1) {
-        res.json({ borrado: true })
-      } else {
-        res.json({ borrado: false })
-      }
-    } catch (error) {
-      res.json({ borrado: false })
-    }
-  })
+export async function borrarComentario (req, res) {
+  try {
+    const { usuario, idPelicula, fecha } = req.body
+
+    const isDeleted = await db.execute({
+      sql: 'DELETE FROM comentario WHERE usuario = ? AND idPelicula = ? AND fecha = ?',
+      args: [usuario, idPelicula, fecha]
+    })
+
+    if (isDeleted.affectedRows === 1) return res.json({ borrado: true })
+
+    return res.json({ borrado: false })
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-function obtenerComentariosUsuario (req, res) {
-  const usuario = req.params.usuario
-  const sql = 'SELECT c.usuario, c.idPelicula, c.comentario, c.estrellas, c.fecha, c.spoiler, p.id, p.titulo FROM comentario AS c INNER JOIN pelicula AS p ON c.idPelicula = p.id WHERE c.usuario = ? ORDER BY c.fecha DESC'
-  connection.query(sql, usuario, (error, result, fields) => {
-    try {
-      if (error) throw error
-      res.json(result)
-    } catch (error) {
-      console.log('Sin comentarios')
-      res.json([])
-    }
-  })
-}
+export async function obtenerComentariosUsuario (req, res) {
+  try {
+    const { usuario } = req.params
 
-module.exports = { anadirComentario, obtenerComentariosPelicula, obtenerTodos, borrarComentario, obtenerComentariosUsuario }
+    const comments = await db.execute({
+      sql: `
+        SELECT
+          c.usuario, c.idPelicula, c.comentario, c.estrellas, c.fecha, c.spoiler, p.id, p.titulo 
+        FROM 
+          comentario AS c 
+        INNER JOIN 
+          pelicula AS p ON c.idPelicula = p.id 
+        WHERE 
+          c.usuario = ? 
+        ORDER BY 
+          c.fecha DESC
+      `,
+      args: [usuario]
+    })
+
+    return res.json(comments.rows)
+  } catch (e) {
+    console.error(e)
+  }
+}

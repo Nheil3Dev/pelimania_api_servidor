@@ -1,12 +1,16 @@
-const connection = require('../database/mysql')
+import { db } from '../database/sqlite.js'
 
-function comprobarUsuario (req, res) {
-  const usuario = req.params.usuario
-  const contrasena = req.params.contrasena
-  connection.query('SELECT usuario, contraseña AS password FROM usuario WHERE usuario = ?', usuario, (error, results, fields) => {
-    if (error) throw error
-    if (results.length === 1) {
-      const password = results[0].password
+export async function comprobarUsuario (req, res) {
+  try {
+    const { usuario, contrasena } = req.params
+
+    const user = await db.execute({
+      sql: 'SELECT usuario, contraseña AS password FROM usuario WHERE usuario = ?',
+      args: [usuario]
+    })
+
+    if (user.rows.length === 1) {
+      const password = user.rows[0].password
       if (password === contrasena) {
         res.json({ registrado: true, acceso: true })
       } else {
@@ -15,46 +19,51 @@ function comprobarUsuario (req, res) {
     } else {
       res.json({ resgistrado: false, acceso: false, error: 'Usuario no registrado' })
     }
-  })
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-function todosUsuarios (res) {
-  const sql = 'SELECT * FROM usuario WHERE usuario != "admin" ORDER BY usuario ASC'
-  connection.query(sql, (error, result, fields) => {
-    if (error) throw error
-    res.json(result)
-  })
+export async function todosUsuarios (res) {
+  try {
+    const users = await db.execute('SELECT * FROM usuario WHERE usuario != "admin" ORDER BY usuario ASC')
+
+    return res.json(users.rows)
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-function agregarUsuario (req, res) {
-  const usuario = req.body.usuario
-  const contrasena = req.body.contrasena
-  const sql = 'INSERT INTO usuario (usuario, contraseña) VALUES (?, ?)'
-  connection.query(sql, [usuario, contrasena], (error, result, fields) => {
-    try {
-      if (error) throw error
-      res.json({ registrado: true })
-    } catch (error) {
-      res.json({ registrado: false })
-    }
-  })
+export async function agregarUsuario (req, res) {
+  try {
+    const { usuario, contrasena } = req.body
+
+    const isCreated = await db.execute({
+      sql: 'INSERT INTO usuario (usuario, contraseña) VALUES (?, ?)',
+      args: [usuario, contrasena]
+    })
+
+    if (isCreated.rowsAffected === 1) return res.json({ registrado: true })
+
+    return res.json({ registrado: false })
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-function borrarUsuario (req, res) {
-  const usuario = req.body.usuario
-  const sql = 'DELETE FROM usuario WHERE usuario = ?'
-  connection.query(sql, usuario, (error, result, fields) => {
-    try {
-      if (error) throw error
-      if (result.affectedRows === 1) {
-        res.json({ borrado: true })
-      } else {
-        res.json({ borrado: false })
-      }
-    } catch (error) {
-      res.json({ borrado: false })
-    }
-  })
-}
+export async function borrarUsuario (req, res) {
+  try {
+    const { usuario } = req.body
 
-module.exports = { todosUsuarios, comprobarUsuario, agregarUsuario, borrarUsuario }
+    const isDeleted = await db.execute({
+      sql: 'DELETE FROM usuario WHERE usuario = ?',
+      args: [usuario]
+    })
+
+    if (isDeleted.rowsAffected === 1) return res.json({ borrado: true })
+
+    return res.json({ borrado: false })
+  } catch (e) {
+    console.error(e)
+  }
+}
